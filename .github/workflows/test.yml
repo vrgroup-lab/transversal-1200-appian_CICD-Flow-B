@@ -1,0 +1,47 @@
+name: demo-rerun-job
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  job1_build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Job 1 OK"
+
+  job2_flaky:
+    runs-on: ubuntu-latest
+    needs: [job1_build]
+    steps:
+      - name: Fail first attempt, pass on rerun
+        run: |
+          echo "Run attempt: ${GITHUB_RUN_ATTEMPT}"
+          if [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
+            echo "Intencionalmente fallando en el primer intento..."
+            exit 1
+          else
+            echo "Segundo intento: ahora pasa ✅"
+          fi
+
+  job3_after:
+    runs-on: ubuntu-latest
+    needs: [job2_flaky]
+    steps:
+      - run: echo "Job 3 se ejecuta cuando job2_flaky termina OK"
+
+  # Este job re-lanza automáticamente los jobs fallidos del run actual
+  auto_rerun_failed:
+    # Se ejecuta cuando algún job previo falló
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    needs: [job1_build, job2_flaky, job3_after]
+    steps:
+      - name: Re-run failed jobs of this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh --version
+          echo "Re-ejecutando jobs fallidos del run ${{ github.run_id }}..."
+          gh run rerun ${{ github.run_id }} --failed

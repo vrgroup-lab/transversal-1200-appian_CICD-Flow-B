@@ -1,0 +1,14 @@
+{
+  "artifact_path": "artifacts/app-9c354868-5dcd-4514-866d-19c6b14ecba7-9c354868-5dcd-4514-866d-19c6b14ecba7.zip",
+  "artifact_dir": "artifacts",
+  "deployment_uuid": "c62c200f-b0e7-4165-a19a-d9e6cbc1ae07",
+  "deployment_status": "COMPLETED",
+  "downloaded_files": [
+    "artifacts/app-9c354868-5dcd-4514-866d-19c6b14ecba7-9c354868-5dcd-4514-866d-19c6b14ecba7.zip",
+    "artifacts/customization/customization-template.properties"
+  ],
+  "database_scripts": [],
+  "plugins_zip": "",
+  "customization_file": "",
+  "customization_template": "artifacts/customization/customization-template.properties"
+}

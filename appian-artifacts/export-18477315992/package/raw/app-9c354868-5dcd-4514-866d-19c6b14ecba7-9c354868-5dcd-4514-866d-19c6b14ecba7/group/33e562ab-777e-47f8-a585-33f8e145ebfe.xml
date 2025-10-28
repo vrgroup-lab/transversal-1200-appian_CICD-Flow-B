@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<groupHaul xmlns:a="http://www.appian.com/ae/types/2009">
+    <versionUuid>33e562ab-777e-47f8-a585-33f8e145ebfe</versionUuid>
+    <group>
+        <name>CB Administradores</name>
+        <securityMap>SECURITYMAP_TEAM</securityMap>
+        <uuid>33e562ab-777e-47f8-a585-33f8e145ebfe</uuid>
+        <groupTypeUuid>SYSTEM_GROUP_TYPE_CUSTOM</groupTypeUuid>
+        <description>Asigna a los usuarios permisos de administrador para los objetos de la aplicación.</description>
+        <delegatedCreation>false</delegatedCreation>
+        <memberPolicy>MEMBERPOLICY_CLOSED</memberPolicy>
+        <viewingPolicy>VIEWINGPOLICY_LOW</viewingPolicy>
+        <attributes>
+            <attribute>
+                <name>ADGroup</name>
+                <type>TYPE_STRING</type>
+                <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string">foobar</value>
+            </attribute>
+            <attribute>
+                <name>ADGroup-QA</name>
+                <type>TYPE_STRING</type>
+                <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string">foobar</value>
+            </attribute>
+            <attribute>
+                <name>ADGroup-DEV</name>
+                <type>TYPE_STRING</type>
+                <value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsi:type="xsd:string">foobar</value>
+            </attribute>
+        </attributes>
+    </group>
+    <members>
+        <users/>
+        <groups/>
+    </members>
+    <admins>
+        <users/>
+        <groups>
+            <groupUuid>33e562ab-777e-47f8-a585-33f8e145ebfe</groupUuid>
+        </groups>
+    </admins>
+    <ruleSet/>
+    <history>
+        <historyInfo versionUuid="33e562ab-777e-47f8-a585-33f8e145ebfe"/>
+    </history>
+</groupHaul>

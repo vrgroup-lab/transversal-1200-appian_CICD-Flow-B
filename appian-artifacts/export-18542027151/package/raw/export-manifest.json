@@ -1,0 +1,13 @@
+{
+  "artifact_path": "artifacts/package-58570736-7269-4495-9141-264e859c8a67-AA-02.zip",
+  "artifact_dir": "artifacts",
+  "deployment_uuid": "59d61f08-f7cc-4452-a2cb-7f4eedfb9a01",
+  "deployment_status": "COMPLETED",
+  "downloaded_files": [
+    "artifacts/package-58570736-7269-4495-9141-264e859c8a67-AA-02.zip"
+  ],
+  "database_scripts": [],
+  "plugins_zip": "",
+  "customization_file": "",
+  "customization_template": ""
+}

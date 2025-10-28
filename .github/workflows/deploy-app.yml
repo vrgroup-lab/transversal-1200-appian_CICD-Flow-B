@@ -1,0 +1,640 @@
+name: Deploy App
+
+on:
+  workflow_dispatch:
+    inputs:
+      plan:
+        description: Plan de promoción (sin dev-to-prod)
+        type: choice
+        options: [dev-to-qa, dev-qa-prod, qa-to-prod]
+        default: dev-to-qa
+
+permissions:
+  actions: write
+  contents: write      # o write si lo necesitas
+  pull-requests: write  # solo si el flujo crea PRs
+  id-token: write
+  issues: write 
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar inputs y variables
+        run: |
+          echo "plan=${{ inputs.plan }}"
+          if [ -z "${{ vars.APP_UUID }}" ]; then
+            echo "❌ Falta la variable de repositorio APP_UUID. Defínela en Settings > Secrets and variables > Variables." >&2
+            exit 1
+          fi
+          if [ -z "${{ vars.APP_NAME }}" ]; then
+            echo "❌ Falta la variable de repositorio APP_NAME. Defínela en Settings > Secrets and variables > Variables." >&2
+            exit 1
+          fi
+
+
+  export:
+    needs: validate
+    uses: vrgroup-lab/appian-cicd-core/.github/workflows/export.yml@sql
+    secrets: inherit
+    with:
+      # Si el plan es qa-to-prod, exportamos desde QA; si no, desde Dev
+      env: ${{ inputs.plan == 'qa-to-prod' && 'qa' || 'dev' }}
+      deploy_kind: app
+      app_uuid: ${{ vars.APP_UUID }}
+      app_name: ${{ vars.APP_NAME || '' }}
+
+  archive_export:
+    name: Procesar artefactos de export e ICF
+    needs: export
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_dir: ${{ steps.publish.outputs.artifact_dir }}
+      metadata_path: ${{ steps.publish.outputs.metadata_path }}
+      icf_template_path: ${{ steps.prepare_icf.outputs.icf_template_path }}
+      icf_template_content_b64: ${{ steps.prepare_icf.outputs.icf_template_content_b64 }}
+      icf_overrides_json_b64: ${{ steps.prepare_icf.outputs.icf_overrides_json_b64 }}
+      icf_overrides_qa_json_b64: ${{ steps.prepare_icf.outputs.icf_overrides_qa_json_b64 }}
+      icf_overrides_prod_json_b64: ${{ steps.prepare_icf.outputs.icf_overrides_prod_json_b64 }}
+      icf_template_source: ${{ steps.prepare_icf.outputs.icf_template_source }}
+      icf_template_status: ${{ steps.prepare_icf.outputs.icf_template_status }}
+      icf_template_file: ${{ steps.prepare_icf.outputs.icf_template_file }}
+      icf_issue_number: ${{ steps.raise.outputs.issue_number }}
+      icf_issue_url: ${{ steps.raise.outputs.issue_url }}
+      package_artifact_name: ${{ steps.locate_package.outputs.package_artifact_name }}
+      package_file_name: ${{ steps.locate_package.outputs.package_file_name }}
+      package_status: ${{ steps.locate_package.outputs.package_status }}
+    steps:
+      - name: Checkout sandbox
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preparar carpeta destino
+        id: prep
+        env:
+          EXPORT_ARTIFACT_NAME: ${{ needs.export.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          name="${EXPORT_ARTIFACT_NAME}"
+          if [ -z "$name" ]; then
+            name="export-${GITHUB_RUN_ID}"
+          fi
+          dest="appian-artifacts/$name"
+          mkdir -p "$dest"
+          echo "dest=$dest" >> "$GITHUB_OUTPUT"
+
+      - name: Descargar paquete principal
+        if: ${{ needs.export.outputs.artifact_name != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.export.outputs.artifact_name }}
+          path: ${{ steps.prep.outputs.dest }}
+
+      - name: Descargar paquete por patrón
+        if: ${{ needs.export.outputs.artifact_name == '' }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*--app-*'
+          path: ${{ steps.prep.outputs.dest }}/package/raw
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Listar contenido descargado
+        run: |
+          set -euo pipefail
+          echo "Contenido tras la descarga inicial:"
+          ls -R "${{ steps.prep.outputs.dest }}" || true
+
+      - name: Descargar metadata del export
+        if: ${{ needs.export.outputs.artifact_name != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ format('{0}-meta', needs.export.outputs.artifact_name) }}
+          path: ${{ steps.prep.outputs.dest }}
+
+      - name: Descargar plantilla de customización
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-customization-template'
+          path: ${{ steps.prep.outputs.dest }}/customization-template/raw
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Registrar metadata de export
+        env:
+          DEST: ${{ steps.prep.outputs.dest }}
+          ARTIFACT_NAME: ${{ needs.export.outputs.artifact_name }}
+          ARTIFACT_PATH: ${{ needs.export.outputs.artifact_path }}
+          ARTIFACT_DIR: ${{ needs.export.outputs.artifact_dir }}
+          MANIFEST_PATH: ${{ needs.export.outputs.manifest_path }}
+          RAW_RESPONSE_PATH: ${{ needs.export.outputs.raw_response_path }}
+          DEPLOYMENT_UUID: ${{ needs.export.outputs.deployment_uuid }}
+          DEPLOYMENT_STATUS: ${{ needs.export.outputs.deployment_status }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          dest_dir = Path(os.environ["DEST"])
+          metadata_path = dest_dir / "export-metadata.json"
+
+          def resolved_path(output_value: str, fallback_name: str) -> str:
+              if not output_value:
+                  return str(dest_dir / fallback_name)
+              candidate = Path(output_value)
+              # Preserve basename but point inside DEST so that the metadata describes local copy
+              return str(dest_dir / candidate.name)
+
+
+          artifact_name = os.environ.get("ARTIFACT_NAME", "")
+          artifact_path_output = os.environ.get("ARTIFACT_PATH", "")
+          artifact_zip_name = Path(artifact_path_output).name if artifact_path_output else f"{artifact_name}.zip"
+
+          data = {
+              "artifact_name": artifact_name,
+              "artifact_path": str(dest_dir / artifact_zip_name),
+              "artifact_dir": str(dest_dir),
+              "manifest_path": resolved_path(os.environ.get("MANIFEST_PATH", ""), "export-manifest.json"),
+              "raw_response_path": resolved_path(os.environ.get("RAW_RESPONSE_PATH", ""), "export-response.json"),
+              "deployment_uuid": os.environ.get("DEPLOYMENT_UUID", ""),
+              "deployment_status": os.environ.get("DEPLOYMENT_STATUS", ""),
+          }
+
+          metadata_path.parent.mkdir(parents=True, exist_ok=True)
+          metadata_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+          PY
+
+      - name: Localizar paquete exportado
+        id: locate_package
+        env:
+          DEST: ${{ steps.prep.outputs.dest }}
+          EXPORT_ARTIFACT_NAME: ${{ needs.export.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          dir="${DEST}"
+          pkg="$(find "$dir" -type f -name '*.zip' | head -n 1 || true)"
+          if [ -n "$pkg" ]; then
+            echo "package_path=$pkg" >> "$GITHUB_OUTPUT"
+            file_name="$(basename "$pkg")"
+            base_name="${file_name%.*}"
+            echo "package_file_name=$file_name" >> "$GITHUB_OUTPUT"
+            echo "package_artifact_name=$base_name" >> "$GITHUB_OUTPUT"
+            echo "package_status=ready" >> "$GITHUB_OUTPUT"
+            echo "Paquete encontrado en: $pkg"
+          elif [ -n "$EXPORT_ARTIFACT_NAME" ]; then
+            echo "package_path=" >> "$GITHUB_OUTPUT"
+            echo "package_file_name=" >> "$GITHUB_OUTPUT"
+            echo "package_artifact_name=$EXPORT_ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+            echo "package_status=export-artifact" >> "$GITHUB_OUTPUT"
+            echo "Se usará el artifact generado por export: $EXPORT_ARTIFACT_NAME"
+          else
+            echo "package_path=" >> "$GITHUB_OUTPUT"
+            echo "package_file_name=" >> "$GITHUB_OUTPUT"
+            echo "package_artifact_name=" >> "$GITHUB_OUTPUT"
+            echo "package_status=missing" >> "$GITHUB_OUTPUT"
+            echo "::warning::No se encontró paquete exportado en $dir ni artifact_name en el export." >&2
+          fi
+
+      - name: Publicar artefacto para promoción
+        if: ${{ steps.locate_package.outputs.package_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: promote-package
+          path: ${{ steps.locate_package.outputs.package_path }}
+
+      - name: Preparar plantilla ICF
+        id: prepare_icf
+        env:
+          ARTIFACT_DIR: ${{ steps.prep.outputs.dest }}
+          FALLBACK_TEMPLATE_PATH: provisioning/icf-template.properties
+        run: python3 .github/scripts/prepare_icf_template.py
+
+      - name: Publicar plantilla ICF para promoción
+        if: ${{ steps.prepare_icf.outputs.icf_template_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: icf-template
+          path: ${{ steps.prepare_icf.outputs.icf_template_path }}
+
+      - name: Publicar rutas generadas
+        id: publish
+        env:
+          DEST: ${{ steps.prep.outputs.dest }}
+        run: |
+          set -euo pipefail
+          echo "artifact_dir=${DEST}" >> "$GITHUB_OUTPUT"
+          echo "metadata_path=${DEST}/export-metadata.json" >> "$GITHUB_OUTPUT"
+
+      - name: Commit artefactos
+        env:
+          DEST: ${{ steps.prep.outputs.dest }}
+          ARTIFACT_NAME: ${{ needs.export.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          current_branch="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+          if [ -n "$current_branch" ]; then
+            git fetch origin "$current_branch"
+            git pull --rebase origin "$current_branch"
+          fi
+          git status --short
+          git add "$DEST"
+          if git diff --cached --quiet; then
+            echo "Sin cambios que versionar"
+            exit 0
+          fi
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit -m "chore: almacenar artefacto $ARTIFACT_NAME"
+          git push
+
+      - name: Mostrar detalles del deployment
+        run: |
+          echo "deployment_uuid=${{ needs.export.outputs.deployment_uuid }}"
+          echo "deployment_status=${{ needs.export.outputs.deployment_status }}"
+
+      - name: Crear issue con guía para ICF
+        id: raise
+        env:
+          PLAN: ${{ inputs.plan }}
+          ARTIFACT_DIR: ${{ steps.publish.outputs.artifact_dir }}
+          METADATA_PATH: ${{ steps.publish.outputs.metadata_path }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TARGET_MAP: '{"dev-to-qa":["qa"],"dev-qa-prod":["qa","prod"],"qa-to-prod":["prod"]}'
+          TEMPLATE_PATH: .github/templates/icf-issue.md
+          PROVISIONING_TEMPLATE_PATH: provisioning/icf-template.properties
+          ICF_TEMPLATE_PATH: ${{ steps.prepare_icf.outputs.icf_template_path }}
+          ICF_TEMPLATE_CONTENT_B64: ${{ steps.prepare_icf.outputs.icf_template_content_b64 }}
+          ICF_OVERRIDES_JSON_B64: ${{ steps.prepare_icf.outputs.icf_overrides_json_b64 }}
+          ICF_OVERRIDES_QA_JSON_B64: ${{ steps.prepare_icf.outputs.icf_overrides_qa_json_b64 }}
+          ICF_OVERRIDES_PROD_JSON_B64: ${{ steps.prepare_icf.outputs.icf_overrides_prod_json_b64 }}
+          ICF_TEMPLATE_SOURCE: ${{ steps.prepare_icf.outputs.icf_template_source }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/create_icf_issue.py
+
+  promote_qa:
+    if: ${{ inputs.plan == 'dev-to-qa' || inputs.plan == 'dev-qa-prod' }}
+    needs: [export, archive_export]
+    runs-on: ubuntu-latest
+    environment: qa
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Mostrar datos de export
+        run: |
+          echo "package_status=${{ needs.archive_export.outputs.package_status }}"
+          echo "package_artifact_name=${{ needs.archive_export.outputs.package_artifact_name }}"
+          echo "package_file_name=${{ needs.archive_export.outputs.package_file_name }}"
+
+      - name: Resolver artifacto de paquete
+        id: resolve_package_qa
+        run: |
+          set -euo pipefail
+          status="${PACKAGE_STATUS}"
+          artifact_base="${PACKAGE_ARTIFACT}"
+          export_name="${EXPORT_ARTIFACT}"
+          resolved=""
+          if [ "$status" = "ready" ]; then
+            resolved="promote-package"
+          elif [ -n "$artifact_base" ]; then
+            resolved="$artifact_base"
+          elif [ -n "$export_name" ]; then
+            resolved="$export_name"
+          fi
+          echo "artifact_name=$resolved" >> "$GITHUB_OUTPUT"
+        env:
+          PACKAGE_STATUS: ${{ needs.archive_export.outputs.package_status }}
+          PACKAGE_ARTIFACT: ${{ needs.archive_export.outputs.package_artifact_name }}
+          EXPORT_ARTIFACT: ${{ needs.export.outputs.artifact_name }}
+
+      - name: Resolver API Key target (QA)
+        env:
+          TARGET_KEY: ${{ secrets.APPIAN_QA_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TARGET_KEY}" ]; then
+            echo "::error::Falta definir el secreto APPIAN_QA_API_KEY en el environment 'qa'." >&2
+            exit 1
+          fi
+          echo "::add-mask::${TARGET_KEY}"
+          echo "APPIAN_API_KEY_TARGET=${TARGET_KEY}" >> "$GITHUB_ENV"
+
+      - name: Validar artefacto de export
+        run: |
+          if [ -z "$PACKAGE_ARTIFACT" ]; then
+            echo "❌ No se encontró paquete exportado para promover." >&2
+            exit 1
+          fi
+        env:
+          PACKAGE_ARTIFACT: ${{ steps.resolve_package_qa.outputs.artifact_name }}
+
+      - name: Descargar plantilla ICF
+        if: ${{ needs.archive_export.outputs.icf_template_path != '' }}
+        id: download_icf_template_qa
+        uses: actions/download-artifact@v4
+        with:
+          name: icf-template
+          path: ${{ runner.temp }}/icf-template
+
+      - name: Descargar paquete/app
+        id: download_package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.resolve_package_qa.outputs.artifact_name }}
+          path: ${{ runner.temp }}/artifact
+
+      - name: Determinar ruta del paquete/app
+        id: package_path
+        env:
+          DOWNLOAD_DIR: ${{ steps.download_package.outputs.download-path }}
+        run: |
+          set -euo pipefail
+          dir="${DOWNLOAD_DIR}"
+          if [ -z "$dir" ]; then
+            echo "No se pudo resolver la ruta de descarga del artefacto." >&2
+            exit 1
+          fi
+          pkg="$(find "$dir" -type f -name '*.zip' | head -n 1)"
+          if [ -z "$pkg" ]; then
+            pkg="$(find "$dir" -type f | head -n 1)"
+          fi
+          if [ -z "$pkg" ]; then
+            echo "No se encontró el artefacto exportado en $dir" >&2
+            exit 1
+          fi
+          echo "package_path=$pkg" >> "$GITHUB_OUTPUT"
+
+      - name: Preparar scripts de base de datos
+        id: prepare_db_scripts
+        uses: ./.github/actions/prepare-db-scripts
+        with:
+          artifact-name: ${{ needs.export.outputs.artifact_name }}
+
+      - name: Construir ICF efímero
+        id: build_icf
+        uses: vrgroup-lab/appian-cicd-core/.github/actions/appian-build-icf@sql
+        env:
+          ICF_JSON_OVERRIDES: ${{ secrets.ICF_JSON_OVERRIDES_QA }}
+        with:
+          template_path: ${{ steps.download_icf_template_qa.outputs.download-path != '' && format('{0}/{1}', steps.download_icf_template_qa.outputs.download-path, needs.archive_export.outputs.icf_template_file) || 'provisioning/icf-template.properties' }}
+          env: qa
+          out_path: ${{ runner.temp }}/icf-qa.properties
+
+      - name: Promover aplicación
+        uses: vrgroup-lab/appian-cicd-core/.github/actions/appian-promote@sql
+        with:
+          source_env: dev
+          target_env: qa
+          package_path: ${{ steps.package_path.outputs.package_path }}
+          icf_path: ${{ steps.build_icf.outputs.icf_path }}
+          db_scripts_path: ${{ steps.prepare_db_scripts.outputs.db_scripts_path != '' && steps.prepare_db_scripts.outputs.db_scripts_path || fromJSON('null') }}
+          data_source: ${{ steps.prepare_db_scripts.outputs.data_source != '' && steps.prepare_db_scripts.outputs.data_source || fromJSON('null') }}
+          db_scripts_manifest: ${{ steps.prepare_db_scripts.outputs.db_scripts_manifest != '' && steps.prepare_db_scripts.outputs.db_scripts_manifest || fromJSON('null') }}
+        env:
+          APPIAN_API_KEY_TARGET: ${{ env.APPIAN_API_KEY_TARGET }}
+
+      - name: Cleanup ICF
+        if: ${{ always() }}
+        run: shred -u ${{ steps.build_icf.outputs.icf_path }} || true
+
+  promote_prod_after_qa:
+    if: ${{ inputs.plan == 'dev-qa-prod' }}
+    needs: [promote_qa, archive_export, export]
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Resolver API Key target (Prod)
+        env:
+          TARGET_KEY: ${{ secrets.APPIAN_PROD_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TARGET_KEY}" ]; then
+            echo "::error::Falta definir el secreto APPIAN_PROD_API_KEY en el environment 'prod'." >&2
+            exit 1
+          fi
+          echo "::add-mask::${TARGET_KEY}"
+          echo "APPIAN_API_KEY_TARGET=${TARGET_KEY}" >> "$GITHUB_ENV"
+
+      - name: Resolver artifacto de paquete
+        id: resolve_package_devprod
+        run: |
+          set -euo pipefail
+          status="${PACKAGE_STATUS}"
+          artifact_base="${PACKAGE_ARTIFACT}"
+          export_name="${EXPORT_ARTIFACT}"
+          resolved=""
+          if [ "$status" = "ready" ]; then
+            resolved="promote-package"
+          elif [ -n "$artifact_base" ]; then
+            resolved="$artifact_base"
+          elif [ -n "$export_name" ]; then
+            resolved="$export_name"
+          fi
+          echo "artifact_name=$resolved" >> "$GITHUB_OUTPUT"
+        env:
+          PACKAGE_STATUS: ${{ needs.archive_export.outputs.package_status }}
+          PACKAGE_ARTIFACT: ${{ needs.archive_export.outputs.package_artifact_name }}
+          EXPORT_ARTIFACT: ${{ needs.export.outputs.artifact_name }}
+
+      - name: Descargar plantilla ICF
+        if: ${{ needs.archive_export.outputs.icf_template_path != '' }}
+        id: download_icf_template_devprod
+        uses: actions/download-artifact@v4
+        with:
+          name: icf-template
+          path: ${{ runner.temp }}/icf-template
+
+      - name: Validar artefacto de export
+        run: |
+          if [ -z "$PACKAGE_ARTIFACT" ]; then
+            echo "❌ No se encontró paquete exportado para promover." >&2
+            exit 1
+          fi
+        env:
+          PACKAGE_ARTIFACT: ${{ steps.resolve_package_devprod.outputs.artifact_name }}
+
+      - name: Descargar paquete/app
+        id: download_package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.resolve_package_devprod.outputs.artifact_name }}
+          path: ${{ runner.temp }}/artifact
+
+      - name: Determinar ruta del paquete/app
+        id: package_path
+        env:
+          DOWNLOAD_DIR: ${{ steps.download_package.outputs.download-path }}
+        run: |
+          set -euo pipefail
+          dir="${DOWNLOAD_DIR}"
+          if [ -z "$dir" ]; then
+            echo "No se pudo resolver la ruta de descarga del artefacto." >&2
+            exit 1
+          fi
+          pkg="$(find "$dir" -type f -name '*.zip' | head -n 1)"
+          if [ -z "$pkg" ]; then
+            pkg="$(find "$dir" -type f | head -n 1)"
+          fi
+          if [ -z "$pkg" ]; then
+            echo "No se encontró el artefacto exportado en $dir" >&2
+            exit 1
+          fi
+          echo "package_path=$pkg" >> "$GITHUB_OUTPUT"
+
+      - name: Preparar scripts de base de datos
+        id: prepare_db_scripts
+        uses: ./.github/actions/prepare-db-scripts
+        with:
+          artifact-name: ${{ needs.export.outputs.artifact_name }}
+
+      - name: Construir ICF efímero
+        id: build_icf
+        uses: vrgroup-lab/appian-cicd-core/.github/actions/appian-build-icf@sql
+        env:
+          ICF_JSON_OVERRIDES: ${{ secrets.ICF_JSON_OVERRIDES_PROD }}
+        with:
+          template_path: ${{ steps.download_icf_template_devprod.outputs.download-path != '' && format('{0}/{1}', steps.download_icf_template_devprod.outputs.download-path, needs.archive_export.outputs.icf_template_file) || 'provisioning/icf-template.properties' }}
+          env: prod
+          out_path: ${{ runner.temp }}/icf-prod.properties
+      - name: Promover aplicación
+        uses: vrgroup-lab/appian-cicd-core/.github/actions/appian-promote@sql
+        with:
+          source_env: dev
+          target_env: prod
+          package_path: ${{ steps.package_path.outputs.package_path }}
+          icf_path: ${{ steps.build_icf.outputs.icf_path }}
+          db_scripts_path: ${{ steps.prepare_db_scripts.outputs.db_scripts_path != '' && steps.prepare_db_scripts.outputs.db_scripts_path || fromJSON('null') }}
+          data_source: ${{ steps.prepare_db_scripts.outputs.data_source != '' && steps.prepare_db_scripts.outputs.data_source || fromJSON('null') }}
+          db_scripts_manifest: ${{ steps.prepare_db_scripts.outputs.db_scripts_manifest != '' && steps.prepare_db_scripts.outputs.db_scripts_manifest || fromJSON('null') }}
+        env:
+          APPIAN_API_KEY_TARGET: ${{ env.APPIAN_API_KEY_TARGET }}
+
+      - name: Cleanup ICF
+        if: ${{ always() }}
+        run: shred -u ${{ steps.build_icf.outputs.icf_path }} || true
+
+  promote_prod_from_qa:
+    if: ${{ inputs.plan == 'qa-to-prod' }}
+    needs: [export, archive_export]
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Resolver API Key target (Prod)
+        env:
+          TARGET_KEY: ${{ secrets.APPIAN_PROD_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TARGET_KEY}" ]; then
+            echo "::error::Falta definir el secreto APPIAN_PROD_API_KEY en el environment 'prod'." >&2
+            exit 1
+          fi
+          echo "::add-mask::${TARGET_KEY}"
+          echo "APPIAN_API_KEY_TARGET=${TARGET_KEY}" >> "$GITHUB_ENV"
+
+      - name: Resolver artifacto de paquete
+        id: resolve_package_qaprod
+        run: |
+          set -euo pipefail
+          status="${PACKAGE_STATUS}"
+          artifact_base="${PACKAGE_ARTIFACT}"
+          export_name="${EXPORT_ARTIFACT}"
+          resolved=""
+          if [ "$status" = "ready" ]; then
+            resolved="promote-package"
+          elif [ -n "$artifact_base" ]; then
+            resolved="$artifact_base"
+          elif [ -n "$export_name" ]; then
+            resolved="$export_name"
+          fi
+          echo "artifact_name=$resolved" >> "$GITHUB_OUTPUT"
+        env:
+          PACKAGE_STATUS: ${{ needs.archive_export.outputs.package_status }}
+          PACKAGE_ARTIFACT: ${{ needs.archive_export.outputs.package_artifact_name }}
+          EXPORT_ARTIFACT: ${{ needs.export.outputs.artifact_name }}
+
+      - name: Validar artefacto de export
+        run: |
+          if [ -z "$PACKAGE_ARTIFACT" ]; then
+            echo "❌ No se encontró paquete exportado para promover." >&2
+            exit 1
+          fi
+        env:
+          PACKAGE_ARTIFACT: ${{ steps.resolve_package_qaprod.outputs.artifact_name }}
+
+      - name: Descargar plantilla ICF
+        if: ${{ needs.archive_export.outputs.icf_template_path != '' }}
+        id: download_icf_template_qaprod
+        uses: actions/download-artifact@v4
+        with:
+          name: icf-template
+          path: ${{ runner.temp }}/icf-template
+
+      - name: Descargar paquete/app
+        id: download_package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.resolve_package_qaprod.outputs.artifact_name }}
+          path: ${{ runner.temp }}/artifact
+
+      - name: Determinar ruta del paquete/app
+        id: package_path
+        env:
+          DOWNLOAD_DIR: ${{ steps.download_package.outputs.download-path }}
+        run: |
+          set -euo pipefail
+          dir="${DOWNLOAD_DIR}"
+          if [ -z "$dir" ]; then
+            echo "No se pudo resolver la ruta de descarga del artefacto." >&2
+            exit 1
+          fi
+          pkg="$(find "$dir" -type f -name '*.zip' | head -n 1)"
+          if [ -z "$pkg" ]; then
+            pkg="$(find "$dir" -type f | head -n 1)"
+          fi
+          if [ -z "$pkg" ]; then
+            echo "No se encontró el artefacto exportado en $dir" >&2
+            exit 1
+          fi
+          echo "package_path=$pkg" >> "$GITHUB_OUTPUT"
+
+      - name: Preparar scripts de base de datos
+        id: prepare_db_scripts
+        uses: ./.github/actions/prepare-db-scripts
+        with:
+          artifact-name: ${{ needs.export.outputs.artifact_name }}
+
+      - name: Construir ICF efímero
+        id: build_icf
+        uses: vrgroup-lab/appian-cicd-core/.github/actions/appian-build-icf@sql
+        env:
+          ICF_JSON_OVERRIDES: ${{ secrets.ICF_JSON_OVERRIDES_PROD }}
+        with:
+          template_path: ${{ steps.download_icf_template_qaprod.outputs.download-path != '' && format('{0}/{1}', steps.download_icf_template_qaprod.outputs.download-path, needs.archive_export.outputs.icf_template_file) || 'provisioning/icf-template.properties' }}
+          env: prod
+          out_path: ${{ runner.temp }}/icf-prod.properties
+
+      - name: Promover aplicación
+        uses: vrgroup-lab/appian-cicd-core/.github/actions/appian-promote@sql
+        with:
+          source_env: qa
+          target_env: prod
+          package_path: ${{ steps.package_path.outputs.package_path }}
+          icf_path: ${{ steps.build_icf.outputs.icf_path }}
+          db_scripts_path: ${{ steps.prepare_db_scripts.outputs.db_scripts_path != '' && steps.prepare_db_scripts.outputs.db_scripts_path || fromJSON('null') }}
+          data_source: ${{ steps.prepare_db_scripts.outputs.data_source != '' && steps.prepare_db_scripts.outputs.data_source || fromJSON('null') }}
+          db_scripts_manifest: ${{ steps.prepare_db_scripts.outputs.db_scripts_manifest != '' && steps.prepare_db_scripts.outputs.db_scripts_manifest || fromJSON('null') }}
+        env:
+          APPIAN_API_KEY_TARGET: ${{ env.APPIAN_API_KEY_TARGET }}
+
+      - name: Cleanup ICF
+        if: ${{ always() }}
+        run: shred -u ${{ steps.build_icf.outputs.icf_path }} || true

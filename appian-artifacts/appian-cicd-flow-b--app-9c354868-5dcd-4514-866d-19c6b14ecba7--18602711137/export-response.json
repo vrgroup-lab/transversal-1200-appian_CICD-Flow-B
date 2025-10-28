@@ -1,0 +1,6 @@
+{
+  "packageZip": "https://dev-bicevida.appiancloud.com/suite/deployment-management/v2/deployments/af4c4878-675b-476e-97b2-73c7ef38cb7a/package-zip/",
+  "customizationFileTemplate": "https://dev-bicevida.appiancloud.com/suite/deployment-management/v2/deployments/af4c4878-675b-476e-97b2-73c7ef38cb7a/customization-file-template/",
+  "status": "COMPLETED",
+  "deploymentLogUrl": "https://dev-bicevida.appiancloud.com/suite/deployment-management/v2/deployments/af4c4878-675b-476e-97b2-73c7ef38cb7a/log/"
+}

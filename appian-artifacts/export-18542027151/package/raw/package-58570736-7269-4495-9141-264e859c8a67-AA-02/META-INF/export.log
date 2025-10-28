@@ -1,0 +1,31 @@
+Éxito (1):
+content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 "CB_cons_no_icf"
+
+Celdas precedentes referenciadas que no se exportaron (1):
+content 207317 05026428-f647-445b-bdbb-47ab8fd56011
+
+Trace:
+2025-10-15 20:39:48.037 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Begin transport.
+2025-10-15 20:39:48.037 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Retrieving object data.
+2025-10-15 20:39:48.045 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Setting uuids of object references.
+2025-10-15 20:39:48.045 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: [Content:id=209419,versionId=-1,name=CB_cons_no_icf,type=32,subtype=0,uuid=_a-0000ee92-fba5-8000-9c16-011c48011c48_4461320,parent=207317]
+2025-10-15 20:39:48.045 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: Constant.forum
+2025-10-15 20:39:48.045 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: Constant.parent
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: com.appiancorp.suiteapi.content.ContentRoleMap@35515b73[
+  ContentRole[name=readers,inherit=true,allowForAll=false]
+  ContentRole[name=authors,inherit=true,allowForAll=false]
+  ContentRole[name=administrators,inherit=true,allowForAll=false]
+  ContentRole[name=denyReaders,inherit=false,allowForAll=false]
+  ContentRole[name=denyAuthors,inherit=false,allowForAll=false]
+  ContentRole[name=denyAdministrators,inherit=false,allowForAll=false]
+  securityVector=15:SEC_PUBLIC=true,SEC_CREATOR_ADMIN=false,SEC_INH_ADMIN=true,SEC_INH_EDITOR=true,SEC_INH_VIEWER=true,SEC_ALL_ADMIN=false,SEC_ALL_EDITOR=false,SEC_ALL_VIEWER=false
+]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: ContentRole[name=readers,inherit=true,allowForAll=false]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: ContentRole[name=authors,inherit=true,allowForAll=false]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: ContentRole[name=administrators,inherit=true,allowForAll=false]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: ContentRole[name=denyReaders,inherit=false,allowForAll=false]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: ContentRole[name=denyAuthors,inherit=false,allowForAll=false]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Processing reference: ContentRole[name=denyAdministrators,inherit=false,allowForAll=false]
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Exporting binary resources.
+2025-10-15 20:39:48.048 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Serializing object to XML.
+2025-10-15 20:39:48.059 DEBUG content 209419 _a-0000ee92-fba5-8000-9c16-011c48011c48_4461320 Object transported.

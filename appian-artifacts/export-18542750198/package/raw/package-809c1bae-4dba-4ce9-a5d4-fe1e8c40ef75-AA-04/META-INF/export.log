@@ -1,0 +1,34 @@
+Éxito (1):
+connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 "CB Test2"
+
+Celdas precedentes referenciadas que no se exportaron (2):
+group 331 eaa9c8a8-8f07-44ae-a2c0-596aa04c4d48
+group 330 33e562ab-777e-47f8-a585-33f8e145ebfe
+
+Trace:
+2025-10-15 21:10:00.388 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Begin transport.
+2025-10-15 21:10:00.388 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Retrieving object data.
+2025-10-15 21:10:00.394 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Setting uuids of object references.
+2025-10-15 21:10:00.394 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ConnectedSystem.forum
+2025-10-15 21:10:00.394 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ConnectedSystem.integrationType
+2025-10-15 21:10:00.394 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ConnectedSystem.logoId
+2025-10-15 21:10:00.394 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ConnectedSystem.sharedConfigParameters
+2025-10-15 21:10:00.394 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: com.appiancorp.suiteapi.content.ContentRoleMap@19f74692[
+  ContentRole[name=readers,groupIds=[331],inherit=false,allowForAll=false]
+  ContentRole[name=authors,inherit=false,allowForAll=false]
+  ContentRole[name=administrators,groupIds=[330],inherit=false,allowForAll=false]
+  ContentRole[name=denyReaders,inherit=false,allowForAll=false]
+  ContentRole[name=denyAuthors,inherit=false,allowForAll=false]
+  ContentRole[name=denyAdministrators,inherit=false,allowForAll=false]
+  securityVector=1:SEC_PUBLIC=true,SEC_CREATOR_ADMIN=false,SEC_INH_ADMIN=false,SEC_INH_EDITOR=false,SEC_INH_VIEWER=false,SEC_ALL_ADMIN=false,SEC_ALL_EDITOR=false,SEC_ALL_VIEWER=false
+]
+2025-10-15 21:10:00.395 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ContentRole[name=readers,groupIds=[331],inherit=false,allowForAll=false]
+2025-10-15 21:10:00.396 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ContentRole[name=authors,inherit=false,allowForAll=false]
+2025-10-15 21:10:00.396 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ContentRole[name=administrators,groupIds=[330],inherit=false,allowForAll=false]
+2025-10-15 21:10:00.4 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ContentRole[name=denyReaders,inherit=false,allowForAll=false]
+2025-10-15 21:10:00.4 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ContentRole[name=denyAuthors,inherit=false,allowForAll=false]
+2025-10-15 21:10:00.4 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Processing reference: ContentRole[name=denyAdministrators,inherit=false,allowForAll=false]
+2025-10-15 21:10:00.401 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Registering export properties.
+2025-10-15 21:10:00.401 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Exporting binary resources.
+2025-10-15 21:10:00.401 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Serializing object to XML.
+2025-10-15 21:10:00.416 DEBUG connectedSystem 209440 _a-0000ee92-fba5-8000-9c16-011c48011c48_4462292 Object transported.

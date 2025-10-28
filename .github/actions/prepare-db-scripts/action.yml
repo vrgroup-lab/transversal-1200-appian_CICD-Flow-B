@@ -1,0 +1,66 @@
+name: Prepare database scripts
+description: Download optional database scripts and metadata, exposing inputs for Appian promotion.
+inputs:
+  artifact-name:
+    description: Base name of the Appian export artifact (without suffixes).
+    required: true
+  temp-dir:
+    description: Directory used to store downloaded artifacts.
+    required: false
+    default: ${{ runner.temp }}
+outputs:
+  db_scripts_path:
+    description: Absolute path to the directory containing SQL/DDL scripts (empty if none).
+    value: ${{ steps.prepare.outputs.db_scripts_path }}
+  data_source:
+    description: Data source name extracted from export metadata (empty if undefined).
+    value: ${{ steps.prepare.outputs.data_source }}
+  db_scripts_manifest:
+    description: Simplified manifest describing database scripts (empty if undefined).
+    value: ${{ steps.prepare.outputs.db_scripts_manifest }}
+runs:
+  using: composite
+  steps:
+    - name: Preparar directorio temporal
+      id: setup
+      shell: bash
+      run: |
+        set -euo pipefail
+        base="${{ inputs.temp-dir }}"
+        if [ -z "$base" ]; then
+          base="${{ runner.temp }}"
+        fi
+        mkdir -p "$base"
+        echo "base_dir=$base" >> "$GITHUB_OUTPUT"
+
+    - name: Descargar scripts de base de datos
+      if: ${{ inputs.artifact-name != '' }}
+      id: download_db_scripts
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}-db-scripts
+        path: ${{ steps.setup.outputs.base_dir }}/db-scripts
+        merge-multiple: true
+      continue-on-error: true
+
+    - name: Descargar metadatos de export
+      if: ${{ inputs.artifact-name != '' }}
+      id: download_export_meta
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}-meta
+        path: ${{ steps.setup.outputs.base_dir }}/export-meta
+      continue-on-error: true
+
+    - name: Preparar metadata de scripts
+      id: prepare
+      shell: bash
+      env:
+        SCRIPTS_DIR: ${{ steps.download_db_scripts.outputs.download-path }}
+        META_DIR: ${{ steps.download_export_meta.outputs.download-path }}
+      run: |
+        set -euo pipefail
+        python3 ".github/scripts/prepare_db_scripts.py" \
+          --output "$GITHUB_OUTPUT" \
+          --scripts-dir "${SCRIPTS_DIR:-}" \
+          --meta-dir "${META_DIR:-}"

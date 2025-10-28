@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<connectedSystemHaul xmlns:a="http://www.appian.com/ae/types/2009">
+    <versionUuid>_a-0000ee92-fba5-8000-9c16-011c48011c48_4544095</versionUuid>
+    <connectedSystem>
+        <name>CB testing</name>
+        <uuid>_a-0000ee92-fba5-8000-9c16-011c48011c48_4544089</uuid>
+        <description></description>
+        <visibility>
+            <advertise>false</advertise>
+            <hierarchy>true</hierarchy>
+            <indexable>true</indexable>
+            <quota>false</quota>
+            <searchable>true</searchable>
+            <system>false</system>
+            <unlogged>false</unlogged>
+        </visibility>
+        <sharedConfigParameters>
+            <a:Dictionary xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                <configurationDescriptor xsi:type="xsd:string"/>
+                <url xsi:type="xsd:string"/>
+                <isInheritedUrlOptionSelected xsi:type="xsd:boolean">false</isInheritedUrlOptionSelected>
+                <baseUrl xsi:type="xsd:string">https://qa-bicevida.appiancloud.com/suite/design/koBAi9CF8Jxf8N-B7lFvP0nptQVJvg1MfCsKOQkFfuQpZF6vxCNAj6Lo5jhiskrX5fffk4_-gGhRh3boSaZeSe5iqB7MAsedulrOg</baseUrl>
+                <authType xsi:type="xsd:string">API Key</authType>
+                <authDetails xsi:type="a:Dictionary">
+                    <apiKeyName xsi:type="xsd:string">aaaa</apiKeyName>
+                    <apiKeyValue xsi:type="a:EncryptedText"/>
+                    <sendAsHeader xsi:type="xsd:boolean">true</sendAsHeader>
+                </authDetails>
+            </a:Dictionary>
+        </sharedConfigParameters>
+        <logoChoice></logoChoice>
+        <integrationType>system.http</integrationType>
+        <enableRtdShortcut>false</enableRtdShortcut>
+        <rtdShortcutDisplayName></rtdShortcutDisplayName>
+    </connectedSystem>
+    <roleMap public="true">
+        <role inherit="false" allowForAll="false" name="readers">
+            <users/>
+            <groups>
+                <groupUuid>eaa9c8a8-8f07-44ae-a2c0-596aa04c4d48</groupUuid>
+            </groups>
+        </role>
+        <role inherit="false" allowForAll="false" name="authors">
+            <users/>
+            <groups/>
+        </role>
+        <role inherit="false" allowForAll="false" name="administrators">
+            <users/>
+            <groups>
+                <groupUuid>33e562ab-777e-47f8-a585-33f8e145ebfe</groupUuid>
+            </groups>
+        </role>
+        <role inherit="false" allowForAll="false" name="denyReaders">
+            <users/>
+            <groups/>
+        </role>
+        <role inherit="false" allowForAll="false" name="denyAuthors">
+            <users/>
+            <groups/>
+        </role>
+        <role inherit="false" allowForAll="false" name="denyAdministrators">
+            <users/>
+            <groups/>
+        </role>
+    </roleMap>
+    <history>
+        <historyInfo versionUuid="_a-0000ee92-fba5-8000-9c16-011c48011c48_4544095"/>
+    </history>
+</connectedSystemHaul>
