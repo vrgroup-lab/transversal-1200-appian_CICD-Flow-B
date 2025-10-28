@@ -1,0 +1,52 @@
+Éxito (1):
+recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed "CB Pasillo"
+
+Celdas precedentes referenciadas que no se exportaron (3):
+group 330 33e562ab-777e-47f8-a585-33f8e145ebfe
+group 331 eaa9c8a8-8f07-44ae-a2c0-596aa04c4d48
+recordType 416 51a77589-a1ba-40e9-a476-a42b33e44bce
+
+Trace:
+2025-10-28 17:11:48.046 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Begin transport.
+2025-10-28 17:11:48.046 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Retrieving object data.
+2025-10-28 17:11:48.105 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Setting uuids of object references.
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.dataSrcExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.defaultFilters
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.defaultFiltersExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.defaultSortInfoAsQueryInfos
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: DetailViewCfg.headerExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: DetailViewCfg.nameExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: DetailViewCfg.uiExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: DetailViewCfg.visibilityExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.facetsListExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.listViewSrcExpr
+2025-10-28 17:11:48.106 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.listViewTemplateExpr
+2025-10-28 17:11:48.124 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: com.appiancorp.record.entities.RecordSourceCfg@2c0d005f
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.customFieldExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.recordFieldSecurityMembershipFilter
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.customFieldExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.recordFieldSecurityMembershipFilter
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.customFieldExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.recordFieldSecurityMembershipFilter
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.customFieldExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.recordFieldSecurityMembershipFilter
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.customFieldExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.recordFieldSecurityMembershipFilter
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.customFieldExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceFieldCfg.recordFieldSecurityMembershipFilter
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceCfg.sourceContextExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordSourceCfg.sourceFilterExpr
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordRelationshipCfg.relationshipData
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordRelationshipCfg.sourceRecordTypeFieldUuid
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordRelationshipCfg.targetJoinFieldStoredForm
+2025-10-28 17:11:48.131 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordRelationshipCfg.targetRecordTypeRef
+2025-10-28 17:11:48.133 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeSearchCfg.placeholder
+2025-10-28 17:11:48.133 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeSearchCfg.searchFieldQueryInfos
+2025-10-28 17:11:48.133 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.recordViewSrcExpr
+2025-10-28 17:11:48.133 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.source
+2025-10-28 17:11:48.133 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: RecordTypeDefinition.titleExpr
+2025-10-28 17:11:48.133 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: Role[name=record_type_administrator,groupIds=[330]]
+2025-10-28 17:11:48.135 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Processing reference: Role[name=record_type_viewer,groupIds=[331]]
+2025-10-28 17:11:48.136 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Exporting binary resources.
+2025-10-28 17:11:48.136 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Serializing object to XML.
+2025-10-28 17:11:48.138 DEBUG recordType 420 ae79803c-5196-4511-8cab-5856e05e35ed Object transported.
