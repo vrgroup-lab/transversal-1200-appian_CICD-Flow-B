@@ -1,0 +1,13 @@
+{
+  "artifact_path": "artifacts/app-9c354868-5dcd-4514-866d-19c6b14ecba7-9c354868-5dcd-4514-866d-19c6b14ecba7.zip",
+  "artifact_dir": "artifacts",
+  "deployment_uuid": "34186d7d-801d-4b2b-8180-9b1db301d495",
+  "deployment_status": "COMPLETED",
+  "downloaded_files": [
+    "artifacts/app-9c354868-5dcd-4514-866d-19c6b14ecba7-9c354868-5dcd-4514-866d-19c6b14ecba7.zip"
+  ],
+  "database_scripts": [],
+  "plugins_zip": "",
+  "customization_file": "",
+  "customization_template": ""
+}
